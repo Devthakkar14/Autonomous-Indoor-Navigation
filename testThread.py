@@ -10,18 +10,18 @@ import warnings
 from object_detector import *
 from threading import *
 
-#all CoOrs in wall map are blocked for the bot
-wall_map = [(2,2), (3,2), (2,3), (3,3), (2,6), (3,6), (2,7), (3,7), (2,10), (3,10), (2,11), (3,11), (6,2), (7,2), (6,3), (7,3), (6,6), (7,6), (6,7), (7,7), (6,10), (7,10), (6,11), (7,11), (10,2), (11,2), (10,3), (11,3), (10,6), (11,6), (10,7), (11,7), (10,10), (11,10), (10,11), (11,11)]
-#wall_map = [(3,4)]
-route = []
+wall_map = [(3,3), (3,4), (4,3), (4,4), (7,3), (7,4), (8,3), (8,4), (11,3), (11,4), (12,3), (12,4), (3,7), (3,8), (4,7), (4,8), (7,7), (7,8), (8,7), (8,8), (11,7), (11,8), (12,7), (12,8), (3,11), (3,12), (4,11), (4,12), (7,11), (7,12), (8,11), (8,12), (11,11), (11,12), (12,11), (12,12),(11,15),(12,15),(13,15),(0,15),(1,15),(2,15),(3,15),(4,15),(6,15),(7,15),(8,15),(9,15),(14,15),(15,15)]
+bot1 = []
+bot2 = []
+sem = Semaphore()
 
-class Node:
+class Node(object):
 
     def __lt__(self, other):
-        return self.f < other.f
+        self.f < other.f
 
     def __le__(self, other):
-        return self.f <= other.f
+        self.f <= other.f
 
     def __init__(node, x, y, space):
 
@@ -34,10 +34,8 @@ class Node:
         node.f = 0.0
         node.g = 0.0
         node.h = 0.0
-        node.sem = Semaphore()
 
-class path_algorithm:
-
+class path_algorithm(object):
     def __init__(self):
 
         self.open_list  = []
@@ -46,16 +44,15 @@ class path_algorithm:
         heapq.heapify(self.open_list)
 
         self.nodes = []
-        self.lockedNodes = []
-        self.rows = 14
-        self.cols = 14
+        self.rows = 15
+        self.cols = 15
 
     def grid_map(self, sx, sy, ex, ey):
 
         for i in range(0,self.rows):
             for j in range(0,self.cols):
 
-                if (i,j) in wall_map:
+                if (i+1,j+1) in wall_map:
                     space = 0
                 else:
                     space = 1
@@ -73,27 +70,22 @@ class path_algorithm:
 
         adj_nodes = []
 
-        if (node.x < self.cols-1 and self.get_pos(node.x+1, node.y).sem.acquire(blocking=False)):
+        if (node.x < self.cols-1):
             adj_nodes.append(self.get_pos(node.x+1, node.y))
-            self.lockedNodes.append(self.get_pos(node.x+1, node.y))
-        if (node.y > 0 and self.get_pos(node.x, node.y-1).sem.acquire(blocking=False)):
+        if (node.y > 0):
             adj_nodes.append(self.get_pos(node.x, node.y-1))
-            self.lockedNodes.append(self.get_pos(node.x, node.y-1))
-        if (node.x > 0 and self.get_pos(node.x-1, node.y).sem.acquire(blocking=False)):
+        if (node.x > 0):
             adj_nodes.append(self.get_pos(node.x-1, node.y))
-            self.lockedNodes.append(self.get_pos(node.x-1, node.y))
-        if (node.y < self.rows-1 and self.get_pos(node.x, node.y+1).sem.acquire(blocking=False)):
+        if (node.y < self.rows-1):
             adj_nodes.append(self.get_pos(node.x, node.y+1))
-            self.lockedNodes.append(self.get_pos(node.x, node.y+1))
 
         return adj_nodes
 
     def get_h(self, node):
-
-        h_factor = 20
+        h_factor = -20
         dx = abs(node.x - self.end.x)
         dy = abs(node.y - self.end.y)
-        h  = h_factor * (dx + dy)
+        h = abs((node.x*self.end.x) - (self.end.y*node.y))*0.001
 
         return h
 
@@ -135,11 +127,7 @@ class path_algorithm:
                         self.update_values(adj, node)
                         heapq.heappush(self.open_list, (adj.f, adj))
 
-    def releaseSem(self):
-        for i in self.lockedNodes:
-            i.sem.release
-
-def draw_path(path, ex, ey, img):
+def draw_path(path, ex, ey, img, imgDest, color):
 
     #Path length
     length = len(path)-1
@@ -155,10 +143,9 @@ def draw_path(path, ex, ey, img):
         x2 += 1
         y1 += 1
         y2 += 1
-        cv2.line(img,((y1*53)-30,(x1*55)-18),((y2*53)-30,(x2*55)-18),(255,0,0),3)
+        cv2.line(img,((y1*53)-30,(x1*55)-18),((y2*53)-30,(x2*55)-18),color,3)
 
-    #Display the output image
-    cv2.imwrite('/home/vishwesh/GeekBot/view1.jpg',img)
+    cv2.imwrite(imgDest,img)
 
     return length
 
@@ -175,8 +162,6 @@ def get_perspective_image(frame):
 
     ret,thresh = cv2.threshold(mask,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
     contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-
-
     #cv2.drawContours(frame,contours,-1,(0,255,0),3)
     biggest = 0
     max_area = 0
@@ -250,10 +235,7 @@ def get_perspective_image(frame):
     Y1 = 0+(y_coordinate+1)*57-5
     Y2 = Y1+57-5
 
-    #print(dst)
-
-    img = dst[Y1:Y2, X1:X2]
-    cv2.imwrite('/home/vishwesh/GeekBot/out2.jpg',img)
+    #img = dst[Y1:Y2, X1:X2]
     #print(check_color(img))
     #drawing the biggest polyline
     #cv2.polylines(frame, [approx], True, (0,140,255), 3)
@@ -266,6 +248,7 @@ def get_perspective_image(frame):
 
     return (dst)
 
+'''
 def check_color(img):
 
     hsv = cv2.cvtColor(img,cv2.COLOR_BGR2HSV)
@@ -291,12 +274,64 @@ def check_color(img):
     if 107.78-tol <= hue <= 107.78+tol and 138.74-tol <= sat <= 138.74+tol and 218.83-tol <= val <= 218.83+tol :
         return "LI-BLUE"
     else:
-        return "WHITE"
+        return "WHITE"'''
 
 def get_distance(x1,y1,x2,y2):
 
     distance = math.hypot(x2 - x1, y2 - y1)
     return distance
+
+def thread_handler_1(frame):
+    global wall_map, bot1
+    route_path = []
+    start_x = 15;
+    start_y = 5;
+    end_x = 5;
+    end_y = 2;
+    while((end_x, end_y) in wall_map):
+        pass
+    sem.acquire()
+    route_path.append((end_x, end_y))
+    path = path_algorithm()
+    path.grid_map(start_y-1, start_x-1, end_y-1, end_x-1)
+    path.path_detect(route_path)
+    route_path.append((start_x, start_y))
+    route_path.reverse()
+    path_color = (255,0,0)
+    draw_path(route_path, end_x, end_y, frame, '/home/vishwesh/GeekBot/view1.jpg', path_color)
+    print(route_path)
+    obs = np.asarray([sublist for sublist in route_path])
+    obs = obs.T
+    bot1 = list(zip(obs[1],obs[0]))
+    wall_map += bot1
+    wall_map = list(set(wall_map) - set(bot2))
+    sem.release()
+
+def thread_handler_2(frame):
+    global wall_map, bot2
+    route_path = []
+    start_x = 15;
+    start_y = 10;
+    end_x = 6;
+    end_y = 4;
+    while((end_x, end_y) in wall_map):
+        pass
+    sem.acquire()
+    route_path.append((end_x, end_y))
+    path = path_algorithm()
+    path.grid_map(start_y-1, start_x-1, end_y-1, end_x-1)
+    path.path_detect(route_path)
+    route_path.append((start_x, start_y))
+    route_path.reverse()
+    path_color = (0,0,255)
+    draw_path(route_path, end_x, end_y, frame, '/home/vishwesh/GeekBot/view2.jpg', path_color)
+    print(route_path)
+    obs = np.asarray([sublist for sublist in route_path])
+    obs = obs.T
+    bot2 = list(zip(obs[1],obs[0]))
+    wall_map += bot2
+    wall_map = list(set(wall_map) - set(bot1))
+    sem.release()
 
 if __name__ == '__main__':
     frame = cv2.imread('/home/vishwesh/GeekBot/2.jpg')
@@ -305,20 +340,10 @@ if __name__ == '__main__':
     frame = cv2.convertScaleAbs(frame, alpha=alpha, beta=beta)
     cv2.imwrite('/home/vishwesh/GeekBot/test.jpg',frame)
     frame = get_perspective_image(frame)
-    route_path = []
-    start_x = 0;
-    start_y = 0;
-    end_x = 5;
-    end_y = 5;
-    route_path.append((end_y+1, end_x+1))
-    path = path_algorithm()
-    path.grid_map(start_x, start_y, end_x, end_y)
-    path.path_detect(route_path)
-    route_path.append((start_y+1, start_x+1))
-    route_path.reverse()
-    draw_path(route_path, end_x+1, end_y+1, frame)
-    print(route_path)
-    path.releaseSem
 
-# while((start_x, start_y) in wall_map):
-#     continue
+    t1 = Thread(target=thread_handler_1, args=(frame,))
+    t2 = Thread(target=thread_handler_2, args=(frame,))
+    t1.start()
+    t2.start()
+    t1.join()
+    t2.join()
