@@ -9,8 +9,23 @@ import timeit
 import warnings
 from object_detector import *
 from threading import *
+from cmath import sqrt
+import csv
 
 wall_map = [(3,3), (3,4), (4,3), (4,4), (7,3), (7,4), (8,3), (8,4), (11,3), (11,4), (12,3), (12,4), (3,7), (3,8), (4,7), (4,8), (7,7), (7,8), (8,7), (8,8), (11,7), (11,8), (12,7), (12,8), (3,11), (3,12), (4,11), (4,12), (7,11), (7,12), (8,11), (8,12), (11,11), (11,12), (12,11), (12,12),(11,15),(12,15),(13,15),(0,15),(1,15),(2,15),(3,15),(4,15),(6,15),(7,15),(8,15),(9,15),(14,15),(15,15)]
+amd = [(6,3), (6,4), (7,2), (7,5), (8,2), (8,5), (9,3), (9,4)]
+pune = [(10,3), (10,4), (11,2), (11,5), (12,2), (12,5), (13,3), (13,4)]
+bng = [(6,7), (6,8), (7,6), (7,9), (8,6), (8,9), (9,7), (9,8)]
+klt = [(2,11), (2,12), (3,10), (3,13), (4,10), (4,13), (5,11), (5,12)]
+mum = [(10,11), (10,12), (11,10), (11,13), (12,10), (12,13), (13,11), (13,12)]
+delh = [(7,11), (7,12), (8,10), (8,13), (9,10), (9,13), (10,11), (10,12)]
+chen = [(10,7), (10,8), (11,6), (11,9), (12,6), (12,9), (13,7), (13,8)]
+jai = [(2,3), (2,4), (3,2), (3,5), (4,2), (4,5), (5,3), (5,4)]
+hyd = [(2,7), (2,8), (3,6), (3,9), (4,6), (4,9), (5,7), (5,8)]
+count1 = None
+count2 = None
+rows1 = None
+rows2 = None
 bot1 = []
 bot2 = []
 sem = Semaphore()
@@ -238,13 +253,13 @@ def get_perspective_image(frame):
     #img = dst[Y1:Y2, X1:X2]
     #print(check_color(img))
     #drawing the biggest polyline
-    #cv2.polylines(frame, [approx], True, (0,140,255), 3)
+    cv2.polylines(frame, [approx], True, (0,140,255), 3)
     #cv2.rectangle(dst, (X1,Y1), (X2,Y2), (0,255,0), 2)
     #cv2.circle(dst,(50, 50),4,(0,0,255),2)
     '''for i in range(14):
         for j in range(14):
             cv2.circle(dst,(75+i*53, 75+j*57),4,(0,0,255),2)'''
-    cv2.imwrite('/home/vishwesh/GeekBot/out.jpg',dst)
+    cv2.imwrite('/home/vishwesh/GeekBot/out.jpg', frame)
 
     return (dst)
 
@@ -276,18 +291,156 @@ def check_color(img):
     else:
         return "WHITE"'''
 
+def next_dest(inp, sx, sy):              #the inp will be the row1[2] for
+    global wall_map
+    global count1
+    global count2
+    if inp == 'Ahmedabad':
+        minDist = 100
+        dest = None
+        for coor in amd:
+            if (coor[1], coor[0]) not in wall_map:
+                dist = (sx - coor[0])**2 + (sy - coor[1])**2
+                if dist < minDist:
+                    minDist = dist
+                    dest = coor
+        if sx == 15 and sy == 10:
+            count2 += 1
+        else:
+            count1 += 1
+        return dest
+
+    elif inp == 'Pune':
+        minDist = 100
+        dest = None
+        for coor in pune:
+            if (coor[1], coor[0]) not in wall_map:
+                dist = (sx - coor[0])**2 + (sy - coor[1])**2
+                if dist < minDist:
+                    minDist = dist
+                    dest = coor
+        if sx == 15 and sy == 10:
+            count2 += 1
+        else:
+            count1 += 1
+        return dest
+
+    elif inp == 'Bengaluru':
+        minDist = 100
+        dest = None
+        for coor in bng:
+            if (coor[1], coor[0]) not in wall_map:
+                dist = (sx - coor[0])**2 + (sy - coor[1])**2
+                if dist < minDist:
+                    minDist = dist
+                    dest = coor
+        if sx == 15 and sy == 10:
+            count2 += 1
+        else:
+            count1 += 1
+        return dest
+
+    elif inp == 'Kolkata':
+        minDist = 100
+        dest = None
+        for coor in klt:
+            if (coor[1], coor[0]) not in wall_map:
+                dist = (sx - coor[0])**2 + (sy - coor[1])**2
+                if dist < minDist:
+                    minDist = dist
+                    dest = coor
+        if sx == 15 and sy == 10:
+            count2 += 1
+        else:
+            count1 += 1
+        return dest
+
+    elif inp == 'Mumbai':
+        minDist = 100
+        dest = None
+        for coor in mum:
+            if (coor[1], coor[0]) not in wall_map:
+                dist = (sx - coor[0])**2 + (sy - coor[1])**2
+                if dist < minDist:
+                    minDist = dist
+                    dest = coor
+        if sx == 15 and sy == 10:
+            count2 += 1
+        else:
+            count1 += 1
+        return dest
+
+    elif inp == 'Delhi':
+        minDist = 100
+        dest = None
+        for coor in delh:
+            if (coor[1], coor[0]) not in wall_map:
+                dist = (sx - coor[0])**2 + (sy - coor[1])**2
+                if dist < minDist:
+                    minDist = dist
+                    dest = coor
+        if sx == 15 and sy == 10:
+            count2 += 1
+        else:
+            count1 += 1
+        return dest
+
+    elif inp == 'Chennai':
+        minDist = 100
+        dest = None
+        for coor in chen:
+            if (coor[1], coor[0]) not in wall_map:
+                dist = (sx - coor[0])**2 + (sy - coor[1])**2
+                if dist < minDist:
+                    minDist = dist
+                    dest = coor
+        if sx == 15 and sy == 10:
+            count2 += 1
+        else:
+            count1 += 1
+        return dest
+
+    elif inp == 'Jaipur':
+        minDist = 100
+        dest = None
+        for coor in jai:
+            if (coor[1], coor[0]) not in wall_map:
+                dist = (sx - coor[0])**2 + (sy - coor[1])**2
+                if dist < minDist:
+                    minDist = dist
+                    dest = coor
+        if sx == 15 and sy == 10:
+            count2 += 1
+        else:
+            count1 += 1
+        return dest
+
+    elif inp == 'Hydrabad':
+        minDist = 100
+        dest = None
+        for coor in hyd:
+            if (coor[1], coor[0]) not in wall_map:
+                dist = (sx - coor[0])**2 + (sy - coor[1])**2
+                if dist < minDist:
+                    minDist = dist
+                    dest = coor
+        if sx == 15 and sy == 10:
+            count2 += 1
+        else:
+            count1 += 1
+        return dest
+
 def get_distance(x1,y1,x2,y2):
 
     distance = math.hypot(x2 - x1, y2 - y1)
     return distance
 
 def thread_handler_1(frame):
-    global wall_map, bot1
+    global wall_map, bot1, count1, rows1
     route_path = []
     start_x = 15;
     start_y = 5;
-    end_x = 4;
-    end_y = 5;
+    end_x, end_y = next_dest(rows1[count1][2], start_x, start_y)
 
     sem.acquire()
     while((end_y, end_x) in wall_map):
@@ -309,12 +462,11 @@ def thread_handler_1(frame):
     sem.release()
 
 def thread_handler_2(frame):
-    global wall_map, bot2
+    global wall_map, bot2, count2, rows2
     route_path = []
     start_x = 15;
     start_y = 10;
-    end_x = 6;
-    end_y = 5;
+    end_x, end_y = next_dest(rows2[count2][2], start_x, start_y)
 
     sem.acquire()
     while((end_y, end_x) in wall_map):
@@ -336,10 +488,26 @@ def thread_handler_2(frame):
     sem.release()
 
 if __name__ == '__main__':
-    frame = cv2.imread('/home/vishwesh/GeekBot/2.jpg')
-    alpha = 1.2 # Contrast control (1.0-3.0)
-    beta = 5 # Brightness control (0-100)
+    file = open('sample_data.csv')
+    csvreader = csv.reader(file)
+    header = []
+    header = next(csvreader)
+    rows1 = []
+    rows2 = []
+    for row in csvreader:
+        if(row[1] == '1'):
+            rows1.append(row)
+        else:
+            rows2.append(row)
+
+    count1 = 0
+    count2 = 0
+
+    frame = cv2.imread('/home/vishwesh/GeekBot/3.jpg')
+    alpha = 1.5 # Contrast control (1.0-3.0)
+    beta = 7 # Brightness control (0-100)
     frame = cv2.convertScaleAbs(frame, alpha=alpha, beta=beta)
+    frame = cv2.rotate(frame, cv2.ROTATE_180)
     cv2.imwrite('/home/vishwesh/GeekBot/test.jpg',frame)
     frame = get_perspective_image(frame)
 

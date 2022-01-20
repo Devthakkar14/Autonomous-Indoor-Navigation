@@ -285,10 +285,10 @@ def thread_handler_1(frame):
     global wall_map, bot1
     route_path = []
     start_x = 15;
-    start_y = 5;
+    start_y = 6;
     end_x = 5;
     end_y = 2;
-    while((end_x, end_y) in wall_map):
+    while((end_y, end_x) in wall_map):
         pass
     sem.acquire()
     route_path.append((end_x, end_y))
@@ -313,8 +313,8 @@ def thread_handler_2(frame):
     start_x = 15;
     start_y = 10;
     end_x = 6;
-    end_y = 4;
-    while((end_x, end_y) in wall_map):
+    end_y = 6;
+    while((end_y, end_x) in wall_map):
         pass
     sem.acquire()
     route_path.append((end_x, end_y))
